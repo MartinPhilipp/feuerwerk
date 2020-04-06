@@ -331,7 +331,6 @@ class Ball(VectorSprite):
     def update(self,seconds):
         VectorSprite.update(self,seconds)
         print("Update Ball", self.pos)
-        self.pos += self.move * seconds
         
     
 class Panel(VectorSprite):
