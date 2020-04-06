@@ -7,10 +7,12 @@ download:
 idea: clean python3/pygame template using pygame.math.vector2
 """
 import pygame
+#from pygame.time import Clock
 import random
 import os
 import time
 import math
+import datetime
 
 def randomize_color(color, delta=50):
     d=random.randint(-delta, delta)
@@ -330,7 +332,7 @@ class Ball(VectorSprite):
         
     def update(self,seconds):
         VectorSprite.update(self,seconds)
-        print("Update Ball", self.pos)
+        print("Update Ball", self.pos, self.move, seconds) # Fehlerquellen: läuft time/os?, seconds richtig?
         
     
 class Panel(VectorSprite):
@@ -384,6 +386,9 @@ class Viewer(object):
         self.background = pygame.Surface(self.screen.get_size()).convert()
         self.background.fill((255,255,255)) # fill background white
         self.clock = pygame.time.Clock()
+        self.last_tick = datetime.datetime.now()
+        self.tickcounter = 0
+        self.last_fps = datetime.datetime.now()
         self.fps = fps
         self.playtime = 0.0
         self.collisions = 0
@@ -463,9 +468,17 @@ class Viewer(object):
         pygame.mouse.set_visible(False)
         self.menu = True
         while running:
-            #pygame.mixer.music.pause()
-            milliseconds = self.clock.tick(self.fps) #
-            seconds = milliseconds / 1000
+            now = datetime.datetime.now()
+            seconds = (now-self.last_tick).total_seconds()
+            print(seconds)
+            self.last_tick = now
+            self.playtime += seconds
+            self.tickcounter += 1
+            if self.tickcounter >= 200:
+                fps_timedelta = (now-self.last_fps).total_seconds()
+                self.fps = self.tickcounter/fps_timedelta
+                self.last_fps = now
+                self.tickcounter = 0
             text = Viewer.menu[Viewer.name][Viewer.cursor]
             # -------- events ------
             for event in pygame.event.get():
@@ -574,10 +587,19 @@ class Viewer(object):
 
 
         while running:
-            milliseconds = self.clock.tick(self.fps) #
-            seconds = milliseconds / 1000
+            now = datetime.datetime.now()
+            seconds = (now-self.last_tick).total_seconds()
+            print(seconds)
+            self.last_tick = now
             self.playtime += seconds
-            
+            self.tickcounter += 1
+            if self.tickcounter >= 200:
+                fps_timedelta = (now-self.last_fps).total_seconds()
+                self.fps = self.tickcounter/fps_timedelta
+                self.last_fps = now
+                self.tickcounter = 0
+                
+
             if gameOver:
                 if self.playtime > exittime:
                     running = False
@@ -598,15 +620,18 @@ class Viewer(object):
             # ------------ pressed keys ------
             pressed_keys = pygame.key.get_pressed()
 
-            # write text below sprites
-            write(self.screen, "FPS: {:8.3}".format(
-                self.clock.get_fps() ), x=10, y=10)
+            # ------------ write FPS on the screen ----------
+            write(self.screen, "FPS: {}".format( #{:8.3}
+                self.fps ), x=10, y=10)
+            
+            
+            #----------------- update everything --------------------
             self.allgroup.update(seconds)
 
             #-----------collision detection ------
             
 
-                            # ----------- clear, draw , update, flip -----------------
+            # ----------- clear, draw , update, flip -----------------
             self.allgroup.draw(self.screen)
 
                         
